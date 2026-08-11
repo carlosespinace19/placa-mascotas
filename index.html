@@ -40,6 +40,11 @@
     .info p {
       margin: 10px 0;
     }
+    .owner-info {
+      border-top: 1px solid #eee;
+      padding-top: 15px;
+      margin-top: 20px;
+    }
     .label {
       font-weight: bold;
     }
@@ -137,7 +142,12 @@
             <p><span class="label">Color:</span> ${pet.color || "-"}</p>
             <p><span class="label">Fecha de nacimiento:</span> ${formatDate(pet.birth_date)}</p>
           </div>
-          ${pet.owner_phone ? `<a class="call-button" href="tel:${pet.owner_phone}">📞 Llamar al dueño</a>` : ''}
+          ${(pet.owner_name || pet.home_address) ? `
+          <div class="info owner-info">
+            <p><span class="label">Tutor:</span> ${pet.owner_name || "-"}</p>
+            <p><span class="label">Dirección:</span> ${pet.home_address || "-"}</p>
+          </div>` : ''}
+          ${pet.owner_phone ? `<a class="call-button" href="tel:${pet.owner_phone}">📞 Llamar al tutor</a>` : ''}
         `;
       } catch (err) {
         card.innerHTML = '<div class="error">Ocurrió un error al cargar los datos. Intenta de nuevo más tarde.</div>';
