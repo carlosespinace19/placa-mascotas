@@ -88,11 +88,11 @@
 
     function formatDate(dateStr) {
       if (!dateStr) return "-";
-      const d = new Date(dateStr);
-      if (isNaN(d)) return dateStr;
-      const dd = String(d.getDate()).padStart(2, "0");
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const yyyy = d.getFullYear();
+      // dateStr viene como "YYYY-MM-DD" desde Supabase.
+      // Se parsea manualmente para evitar desfases de zona horaria.
+      const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr);
+      if (!match) return dateStr;
+      const [, yyyy, mm, dd] = match;
       return `${dd}-${mm}-${yyyy}`;
     }
 
