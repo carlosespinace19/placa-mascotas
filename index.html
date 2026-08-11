@@ -137,7 +137,7 @@
             <p><span class="label">Color:</span> ${pet.color || "-"}</p>
             <p><span class="label">Fecha de nacimiento:</span> ${formatDate(pet.birth_date)}</p>
           </div>
-          <a class="call-button" href="#">📞 Llamar al dueño</a>
+          ${pet.owner_phone ? `<a class="call-button" href="tel:${pet.owner_phone}">📞 Llamar al dueño</a>` : ''}
         `;
       } catch (err) {
         card.innerHTML = '<div class="error">Ocurrió un error al cargar los datos. Intenta de nuevo más tarde.</div>';
