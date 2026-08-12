@@ -446,12 +446,18 @@
       const name = petName || "tu mascota";
       const cleanPhone = (phone || "").replace(/[^\d]/g, "");
 
+      const goToWhatsapp = (mapsUrl) => {
+        const text = encodeURIComponent(
+          mapsUrl
+            ? `Hola, encontré a ${name} 🐾. Esta es mi ubicación: ${mapsUrl}`
+            : `Hola, encontré a ${name} 🐾. Te voy a compartir mi ubicación por aquí para que puedas venir a buscarla. (Toca el clip 📎 y luego "Ubicación" para enviarla)`
+        );
+        window.location.href = `https://wa.me/${cleanPhone}?text=${text}`;
+      };
+
       getCurrentMapsUrl().then(
-        (mapsUrl) => {
-          const text = encodeURIComponent(`Hola, encontré a ${name} 🐾. Esta es mi ubicación: ${mapsUrl}`);
-          window.location.href = `https://wa.me/${cleanPhone}?text=${text}`;
-        },
-        () => showLocationHelp("whatsapp", cleanPhone, name)
+        (mapsUrl) => goToWhatsapp(mapsUrl),
+        () => goToWhatsapp(null)
       );
     }
 
