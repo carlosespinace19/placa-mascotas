@@ -50,13 +50,27 @@
     }
     .call-button {
       display: block;
-      margin-top: 30px;
+      margin-top: 15px;
       padding: 16px;
       border-radius: 12px;
       background: #222;
       color: white;
       text-decoration: none;
       font-weight: bold;
+      border: none;
+      width: 100%;
+      font-size: 16px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .call-button:first-of-type {
+      margin-top: 30px;
+    }
+    .location-button {
+      background: #25D366;
+    }
+    .owner-info a {
+      color: #222;
     }
     .loading, .error {
       padding: 40px 20px;
@@ -94,6 +108,25 @@
       if (!match) return dateStr;
       const [, yyyy, mm, dd] = match;
       return `${dd}-${mm}-${yyyy}`;
+    }
+
+    function speciesEmoji(species) {
+      const s = (species || "").trim().toLowerCase();
+      const map = {
+        perro: "🐕",
+        gato: "🐈",
+        ave: "🐦",
+        conejo: "🐇",
+        tortuga: "🐢",
+        hamster: "🐹",
+        hámster: "🐹"
+      };
+      return map[s] || "🐾";
+    }
+
+    function mapsLink(address) {
+      if (!address) return null;
+      return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(address);
     }
 
     async function loadPet() {
@@ -137,7 +170,7 @@
         }
 
         card.innerHTML = `
-          <h1>🐕 ${pet.name || "Sin nombre"}</h1>
+          <h1>${speciesEmoji(pet.species)} ${pet.name || "Sin nombre"}</h1>
           <div class="subtitle">Placa inteligente para mascotas</div>
           <div class="info">
             <p><span class="label">Raza:</span> ${pet.breed || "-"}</p>
@@ -148,14 +181,57 @@
           ${(pet.owner_name || pet.home_address) ? `
           <div class="info owner-info">
             <p><span class="label">Tutor:</span> ${pet.owner_name || "-"}</p>
-            <p><span class="label">Dirección:</span> ${pet.home_address || "-"}</p>
+            <p><span class="label">Dirección:</span> ${
+              pet.home_address
+                ? `<a href="${mapsLink(pet.home_address)}" target="_blank" rel="noopener">${pet.home_address}</a>`
+                : "-"
+            }</p>
           </div>` : ''}
           ${pet.owner_phone ? `<a class="call-button" href="tel:${pet.owner_phone}">📞 Llamar al tutor</a>` : ''}
+          ${pet.owner_phone ? `<button class="call-button location-button" id="shareLocationBtn" data-phone="${pet.owner_phone}" data-pet="${pet.name || ''}">📍 Compartir mi ubicación</button>` : ''}
         `;
+
+        const shareBtn = document.getElementById("shareLocationBtn");
+        if (shareBtn) {
+          shareBtn.addEventListener("click", () => shareLocation(shareBtn.dataset.phone, shareBtn.dataset.pet));
+        }
       } catch (err) {
         card.innerHTML = '<div class="error">Ocurrió un error al cargar los datos. Intenta de nuevo más tarde.</div>';
         console.error(err);
       }
+    }
+
+    function shareLocation(phone, petName) {
+      const btn = document.getElementById("shareLocationBtn");
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "📍 Obteniendo ubicación...";
+      }
+
+      if (!navigator.geolocation) {
+        alert("Tu navegador no permite compartir ubicación. Puedes llamar al tutor directamente.");
+        if (btn) { btn.disabled = false; btn.textContent = "📍 Compartir mi ubicación"; }
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
+          const text = encodeURIComponent(
+            `Hola, encontré a ${petName || "tu mascota"} 🐾. Esta es mi ubicación: ${mapsUrl}`
+          );
+          const cleanPhone = (phone || "").replace(/[^\d]/g, "");
+          window.open(`https://wa.me/${cleanPhone}?text=${text}`, "_blank");
+          if (btn) { btn.disabled = false; btn.textContent = "📍 Compartir mi ubicación"; }
+        },
+        (err) => {
+          alert("No se pudo obtener tu ubicación. Revisa los permisos de ubicación del navegador e intenta de nuevo.");
+          if (btn) { btn.disabled = false; btn.textContent = "📍 Compartir mi ubicación"; }
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
     }
 
     loadPet();
