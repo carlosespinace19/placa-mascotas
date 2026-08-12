@@ -82,6 +82,14 @@
       width: 18px;
       height: 18px;
     }
+    .share-label {
+      font-size: 13px;
+      color: #666;
+      font-weight: bold;
+      margin-top: 20px;
+      margin-bottom: 8px;
+      text-align: left;
+    }
     .owner-info a {
       color: #222;
     }
@@ -380,6 +388,7 @@
             ${lostBanner}
             <h1>${speciesEmoji(pet.species)} ${pet.name || "Sin nombre"}</h1>
             ${callButton}
+            <div class="share-label">📍 Comparte tu ubicación para que puedan buscarla:</div>
             ${locationButton}
             <div class="info compact">
               <p><span class="label">Raza:</span> ${pet.breed || "-"}</p>
