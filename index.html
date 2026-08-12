@@ -483,11 +483,17 @@
           body: JSON.stringify({ is_lost: goingLost })
         });
 
-        if (!res.ok) throw new Error("Error al actualizar");
+        if (!res.ok) {
+          const errBody = await res.text();
+          console.error("Error de Supabase:", res.status, errBody);
+          document.getElementById("pinError").textContent = "Error (" + res.status + "): " + errBody;
+          return;
+        }
 
         location.reload();
       } catch (err) {
-        document.getElementById("pinError").textContent = "Ocurrió un error. Intenta de nuevo.";
+        console.error(err);
+        document.getElementById("pinError").textContent = "Ocurrió un error de red. Intenta de nuevo.";
       }
     }
 
