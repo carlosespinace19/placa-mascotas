@@ -103,6 +103,17 @@
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.02); }
     }
+    .call-button.urgent-pulse {
+      animation: urgent-pulse 1.2s infinite;
+    }
+    @keyframes urgent-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(192,57,43,0.5); }
+      50% { box-shadow: 0 0 0 10px rgba(192,57,43,0); }
+    }
+    .info.compact p {
+      font-size: 14px;
+      margin: 6px 0;
+    }
     .tutor-link {
       display: block;
       margin-top: 20px;
@@ -313,17 +324,15 @@
           </div>
         ` : "";
 
-        card.innerHTML = `
-          ${lostBanner}
-          <h1>${speciesEmoji(pet.species)} ${pet.name || "Sin nombre"}</h1>
-          <div class="subtitle">Placa inteligente para mascotas</div>
-          <div class="info">
-            <p><span class="label">Raza:</span> ${pet.breed || "-"}</p>
-            <p><span class="label">Sexo:</span> ${pet.sex || "-"}</p>
-            <p><span class="label">Color:</span> ${pet.color || "-"}</p>
-            <p><span class="label">Fecha de nacimiento:</span> ${formatDate(pet.birth_date)}</p>
-          </div>
-          ${(pet.owner_name || pet.home_address) ? `
+        const callButton = pet.owner_phone
+          ? `<a class="call-button${plate.is_lost ? ' urgent-pulse' : ''}" href="tel:${pet.owner_phone}">📞 Llamar al tutor</a>`
+          : '';
+
+        const locationButton = (pet.owner_phone && plate.is_lost)
+          ? `<button class="call-button location-button" id="shareLocationBtn" data-phone="${pet.owner_phone}" data-pet="${pet.name || ''}">📍 Compartir mi ubicación</button>`
+          : '';
+
+        const ownerBlock = (pet.owner_name || pet.home_address) ? `
           <div class="info owner-info">
             <p><span class="label">Tutor:</span> ${pet.owner_name || "-"}</p>
             <p><span class="label">Dirección:</span> ${
@@ -331,10 +340,37 @@
                 ? `<a href="${mapsLink(pet.home_address)}" target="_blank" rel="noopener">${pet.home_address}</a>`
                 : "-"
             }</p>
-          </div>` : ''}
-          ${pet.owner_phone ? `<a class="call-button" href="tel:${pet.owner_phone}">📞 Llamar al tutor</a>` : ''}
-          ${pet.owner_phone ? `<button class="call-button location-button" id="shareLocationBtn" data-phone="${pet.owner_phone}" data-pet="${pet.name || ''}">📍 Compartir mi ubicación</button>` : ''}
-        `;
+          </div>` : '';
+
+        if (plate.is_lost) {
+          // Modo perdido: contacto primero, datos esenciales compactos, sin fecha de nacimiento
+          card.innerHTML = `
+            ${lostBanner}
+            <h1>${speciesEmoji(pet.species)} ${pet.name || "Sin nombre"}</h1>
+            ${callButton}
+            ${locationButton}
+            <div class="info compact">
+              <p><span class="label">Raza:</span> ${pet.breed || "-"}</p>
+              <p><span class="label">Sexo:</span> ${pet.sex || "-"}</p>
+              <p><span class="label">Color:</span> ${pet.color || "-"}</p>
+            </div>
+            ${ownerBlock}
+          `;
+        } else {
+          // Modo normal: orden habitual completo
+          card.innerHTML = `
+            <h1>${speciesEmoji(pet.species)} ${pet.name || "Sin nombre"}</h1>
+            <div class="subtitle">Placa inteligente para mascotas</div>
+            <div class="info">
+              <p><span class="label">Raza:</span> ${pet.breed || "-"}</p>
+              <p><span class="label">Sexo:</span> ${pet.sex || "-"}</p>
+              <p><span class="label">Color:</span> ${pet.color || "-"}</p>
+              <p><span class="label">Fecha de nacimiento:</span> ${formatDate(pet.birth_date)}</p>
+            </div>
+            ${ownerBlock}
+            ${callButton}
+          `;
+        }
 
         const cardWrap = document.querySelector(".card-wrap");
         const bellBtn = document.createElement("button");
