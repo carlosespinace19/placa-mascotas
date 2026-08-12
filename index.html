@@ -118,19 +118,26 @@
       position: absolute;
       top: 16px;
       right: 16px;
-      width: 42px;
-      height: 42px;
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
-      background: #f5f5f5;
-      border: none;
+      background: #fff5f5;
+      border: 2px solid #c0392b;
+      color: #c0392b;
       font-size: 20px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      animation: bell-pulse 1.8s infinite;
     }
     .bell-btn.active {
-      background: #fdecea;
+      background: #c0392b;
+      animation: pulse 1.4s infinite;
+    }
+    @keyframes bell-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(192,57,43,0.35); }
+      50% { box-shadow: 0 0 0 8px rgba(192,57,43,0); }
     }
     .card-wrap {
       position: relative;
@@ -334,7 +341,7 @@
         bellBtn.className = "bell-btn" + (plate.is_lost ? " active" : "");
         bellBtn.id = "bellBtn";
         bellBtn.title = plate.is_lost ? "La mascota está marcada como perdida" : "¿Se perdió tu mascota?";
-        bellBtn.textContent = "🔔";
+        bellBtn.textContent = plate.is_lost ? "🚨" : "🆘";
         cardWrap.appendChild(bellBtn);
         bellBtn.addEventListener("click", () => openLostModal(plate, pet));
 
