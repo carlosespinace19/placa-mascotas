@@ -79,6 +79,30 @@
     .error {
       color: #c0392b;
     }
+    body.lost-mode {
+      background: #c0392b;
+    }
+    .lost-banner {
+      background: #c0392b;
+      color: white;
+      padding: 16px 20px;
+      border-radius: 16px;
+      margin-bottom: 16px;
+      text-align: center;
+      animation: pulse 1.4s infinite;
+    }
+    .lost-banner .title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+    .lost-mode .card {
+      border: 3px solid #c0392b;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
   </style>
 </head>
 <body>
@@ -169,7 +193,19 @@
           return;
         }
 
+        if (plate.is_lost) {
+          document.body.classList.add("lost-mode");
+        }
+
+        const lostBanner = plate.is_lost ? `
+          <div class="lost-banner">
+            <div class="title">🚨 MASCOTA PERDIDA</div>
+            <div>${plate.lost_message || "¡Ayúdame a volver a casa!"}</div>
+          </div>
+        ` : "";
+
         card.innerHTML = `
+          ${lostBanner}
           <h1>${speciesEmoji(pet.species)} ${pet.name || "Sin nombre"}</h1>
           <div class="subtitle">Placa inteligente para mascotas</div>
           <div class="info">
