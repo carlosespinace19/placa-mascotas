@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel - Modo Perdido</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      color: #222;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 30px 25px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    }
+    h1 {
+      font-size: 20px;
+      margin-top: 0;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+      margin-top: 16px;
+      font-size: 14px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 15px;
+      font-family: inherit;
+    }
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      border: none;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
+      margin-top: 20px;
+      font-family: inherit;
+    }
+    .btn-search {
+      background: #222;
+      color: white;
+    }
+    .btn-activate {
+      background: #c0392b;
+      color: white;
+    }
+    .btn-deactivate {
+      background: #27ae60;
+      color: white;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 10px;
+      font-weight: bold;
+      text-align: center;
+    }
+    .status.lost {
+      background: #fdecea;
+      color: #c0392b;
+    }
+    .status.safe {
+      background: #eafaf1;
+      color: #27ae60;
+    }
+    .msg {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #666;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>🔧 Panel de administración</h1>
+      <label for="plateCode">Código de placa</label>
+      <input type="text" id="plateCode" placeholder="Ej: DOG-000001">
+      <button class="btn-search" id="searchBtn">Buscar mascota</button>
+
+      <div id="result" class="hidden">
+        <div id="statusBox" class="status"></div>
+
+        <label for="lostMessage">Mensaje que verá quien encuentre a la mascota</label>
+        <textarea id="lostMessage"></textarea>
+
+        <button id="activateBtn" class="btn-activate hidden">🚨 Activar modo perdido</button>
+        <button id="deactivateBtn" class="btn-deactivate hidden">✅ Marcar como encontrada</button>
+        <p class="msg" id="feedback"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://teihrqczskfvoumuqrim.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlaWhycWN6c2tmdm91bXVxcmltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYyMzM0MjcsImV4cCI6MjEwMTgwOTQyN30.DgNthzgATvcRYgoE4JOfTP-9pm4-wsXjf1sQQsJHlb4";
+
+    let currentPlateCode = null;
+
+    async function searchPlate() {
+      const code = document.getElementById("plateCode").value.trim();
+      const feedback = document.getElementById("feedback");
+      feedback.textContent = "";
+      if (!code) return;
+
+      try {
+        const url = SUPABASE_URL +
+          "/rest/v1/plates?plate_code=eq." + encodeURIComponent(code) +
+          "&select=*,pets(name)";
+        const res = await fetch(url, {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: "Bearer " + SUPABASE_ANON_KEY
+          }
+        });
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+          feedback.textContent = "No se encontró ninguna placa con ese código.";
+          document.getElementById("result").classList.add("hidden");
+          return;
+        }
+
+        const plate = data[0];
+        currentPlateCode = code;
+        renderStatus(plate);
+      } catch (err) {
+        feedback.textContent = "Ocurrió un error al buscar. Intenta de nuevo.";
+      }
+    }
+
+    function renderStatus(plate) {
+      const result = document.getElementById("result");
+      const statusBox = document.getElementById("statusBox");
+      const lostMessage = document.getElementById("lostMessage");
+      const activateBtn = document.getElementById("activateBtn");
+      const deactivateBtn = document.getElementById("deactivateBtn");
+      const petName = plate.pets && plate.pets[0] ? plate.pets[0].name : "esta mascota";
+
+      result.classList.remove("hidden");
+      lostMessage.value = plate.lost_message || "¡Ayúdame a volver a casa! Mi tutor me está buscando, por favor contáctalo.";
+
+      if (plate.is_lost) {
+        statusBox.textContent = `🚨 ${petName} está marcada como PERDIDA`;
+        statusBox.className = "status lost";
+        activateBtn.classList.add("hidden");
+        deactivateBtn.classList.remove("hidden");
+      } else {
+        statusBox.textContent = `✅ ${petName} está marcada como en casa`;
+        statusBox.className = "status safe";
+        activateBtn.classList.remove("hidden");
+        deactivateBtn.classList.add("hidden");
+      }
+    }
+
+    async function setLostStatus(isLost) {
+      const feedback = document.getElementById("feedback");
+      const lostMessage = document.getElementById("lostMessage").value.trim();
+
+      const confirmText = isLost
+        ? "¿Confirmas que quieres ACTIVAR el modo perdido? La placa mostrará una alerta a quien la escanee."
+        : "¿Confirmas que la mascota fue encontrada y quieres DESACTIVAR el modo perdido?";
+
+      if (!confirm(confirmText)) return;
+
+      try {
+        const url = SUPABASE_URL +
+          "/rest/v1/plates?plate_code=eq." + encodeURIComponent(currentPlateCode);
+
+        const res = await fetch(url, {
+          method: "PATCH",
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: "Bearer " + SUPABASE_ANON_KEY,
+            "Content-Type": "application/json",
+            Prefer: "return=representation"
+          },
+          body: JSON.stringify({ is_lost: isLost, lost_message: lostMessage })
+        });
+
+        if (!res.ok) throw new Error("Error al actualizar");
+
+        const data = await res.json();
+        feedback.textContent = isLost ? "Modo perdido activado." : "Modo perdido desactivado.";
+        renderStatus(data[0]);
+      } catch (err) {
+        feedback.textContent = "Ocurrió un error al actualizar. Intenta de nuevo.";
+      }
+    }
+
+    document.getElementById("searchBtn").addEventListener("click", searchPlate);
+    document.getElementById("activateBtn").addEventListener("click", () => setLostStatus(true));
+    document.getElementById("deactivateBtn").addEventListener("click", () => setLostStatus(false));
+  </script>
+</body>
+</html>
