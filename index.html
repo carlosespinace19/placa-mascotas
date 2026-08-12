@@ -401,7 +401,7 @@
             ? `Hola, encontré a ${name} 🐾. Esta es mi ubicación: ${mapsUrl}`
             : `Hola, encontré a ${name} 🐾. Te voy a compartir mi ubicación por aquí para que puedas venir a buscarla. (Toca el clip 📎 y luego "Ubicación" para enviarla)`
         );
-        window.open(`https://wa.me/${cleanPhone}?text=${text}`, "_blank");
+        window.location.href = `https://wa.me/${cleanPhone}?text=${text}`;
       };
 
       if (!navigator.geolocation) {
