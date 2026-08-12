@@ -69,9 +69,6 @@
     .location-button {
       background: #25D366;
     }
-    .location-button.native-button {
-      background: #3B82C4;
-    }
     .btn-icon {
       display: inline-flex;
       align-items: center;
@@ -249,16 +246,6 @@
       margin-bottom: 12px;
       min-height: 16px;
     }
-    .help-steps {
-      text-align: left;
-      font-size: 14px;
-      color: #444;
-      padding-left: 20px;
-      margin-bottom: 20px;
-    }
-    .help-steps li {
-      margin-bottom: 8px;
-    }
   </style>
 </head>
 <body>
@@ -368,17 +355,10 @@
           : '';
 
         const whatsappIcon = `<span class="btn-icon"><svg viewBox="0 0 24 24" fill="white"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01C17.19 3.03 14.7 2 12.04 2zm0 18.13h-.01c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.15 8.15 0 01-1.25-4.36c0-4.51 3.67-8.18 8.19-8.18 2.19 0 4.24.85 5.79 2.4a8.13 8.13 0 012.4 5.79c0 4.52-3.68 8.19-8.19 8.19zm4.48-6.13c-.24-.12-1.44-.71-1.67-.79-.22-.08-.38-.12-.55.12-.16.24-.63.79-.77.95-.14.16-.28.18-.52.06-.24-.12-1.01-.37-1.92-1.18-.71-.63-1.19-1.42-1.33-1.66-.14-.24-.01-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.55-1.32-.75-1.81-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.42.06-.64.3-.22.24-.85.83-.85 2.02 0 1.19.87 2.34.99 2.5.12.16 1.71 2.61 4.15 3.66.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.16.2-.57.2-1.06.14-1.16-.06-.1-.22-.16-.46-.28z"/></svg></span>`;
-        const nativeShareIcon = `<span class="btn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg></span>`;
 
-        const whatsappButton = pet.owner_phone
+        const locationButton = (pet.owner_phone && plate.is_lost)
           ? `<button class="call-button location-button" id="shareWhatsappBtn" data-phone="${pet.owner_phone}" data-pet="${pet.name || ''}">${whatsappIcon}Compartir por WhatsApp</button>`
           : '';
-
-        const nativeButton = pet.owner_phone
-          ? `<button class="call-button location-button native-button" id="shareNativeBtn" data-phone="${pet.owner_phone}" data-pet="${pet.name || ''}">${nativeShareIcon}Compartir directo</button>`
-          : '';
-
-        const locationButton = plate.is_lost ? `${whatsappButton}${nativeButton}` : '';
 
         const ownerBlock = (pet.owner_name || pet.home_address) ? `
           <div class="info owner-info">
@@ -436,11 +416,6 @@
         if (whatsappBtn) {
           whatsappBtn.addEventListener("click", () => shareViaWhatsApp(whatsappBtn.dataset.phone, whatsappBtn.dataset.pet));
         }
-
-        const nativeBtn = document.getElementById("shareNativeBtn");
-        if (nativeBtn) {
-          nativeBtn.addEventListener("click", () => shareViaNative(nativeBtn.dataset.phone, nativeBtn.dataset.pet));
-        }
       } catch (err) {
         card.innerHTML = '<div class="error">Ocurrió un error al cargar los datos. Intenta de nuevo más tarde.</div>';
         console.error(err);
@@ -478,94 +453,6 @@
         (mapsUrl) => goToWhatsapp(mapsUrl),
         () => goToWhatsapp(null)
       );
-    }
-
-    function shareViaNative(phone, petName) {
-      const name = petName || "tu mascota";
-
-      getCurrentMapsUrl().then(
-        (mapsUrl) => {
-          const shareData = {
-            title: "Encontré a " + name,
-            text: `Hola, encontré a ${name} 🐾. Esta es mi ubicación:`,
-            url: mapsUrl
-          };
-          if (navigator.share) {
-            navigator.share(shareData).catch(() => {});
-          } else {
-            // Sin Web Share API disponible: copiamos el link para que lo pegue donde quiera
-            const fullText = shareData.text + " " + shareData.url;
-            if (navigator.clipboard) {
-              navigator.clipboard.writeText(fullText);
-              alert("Tu navegador no tiene menú de compartir. Copiamos el mensaje, puedes pegarlo en cualquier app.");
-            } else {
-              alert("Tu ubicación: " + mapsUrl);
-            }
-          }
-        },
-        () => showLocationHelp("native", phone, name)
-      );
-    }
-
-    function showLocationHelp(source, cleanPhone, petName) {
-      const container = document.getElementById("modalContainer");
-      const ua = navigator.userAgent || "";
-      const isIOS = /iPhone|iPad|iPod/i.test(ua);
-      const isAndroid = /Android/i.test(ua);
-
-      let steps;
-      if (isIOS) {
-        steps = [
-          "Abre Ajustes en tu celular.",
-          "Toca Privacidad y seguridad → Localización.",
-          "Activa el interruptor de arriba si está apagado.",
-          "Busca Safari (o el navegador que uses) en la lista y elige \"Al usar la app\".",
-          "Vuelve a esta página y toca de nuevo el botón."
-        ];
-      } else if (isAndroid) {
-        steps = [
-          "Abre Ajustes en tu celular.",
-          "Toca Ubicación (o Localización) y actívala.",
-          "Abre los ajustes del navegador que estás usando (ej. Chrome) → Permisos del sitio → Ubicación, y permite el acceso.",
-          "Vuelve a esta página y toca de nuevo el botón."
-        ];
-      } else {
-        steps = [
-          "Revisa que la ubicación esté activada en la configuración de tu celular.",
-          "Revisa que el navegador tenga permiso de ubicación en sus ajustes.",
-          "Vuelve a esta página y toca de nuevo el botón."
-        ];
-      }
-
-      const stepsHtml = steps.map((s) => `<li>${s}</li>`).join("");
-
-      container.innerHTML = `
-        <div class="modal-overlay" id="modalOverlay">
-          <div class="modal-box">
-            <h2>📍 No pudimos obtener tu ubicación</h2>
-            <p>Tu celular no nos dejó acceder a la ubicación. Sigue estos pasos para activarla:</p>
-            <ol class="help-steps">${stepsHtml}</ol>
-            <div class="modal-row">
-              <button class="modal-btn-no" id="modalWhatsappAnyway">${source === "whatsapp" ? "Continuar sin ubicación" : "Cerrar"}</button>
-              <button class="modal-btn-yes" id="modalCloseHelp">Entendido</button>
-            </div>
-          </div>
-        </div>
-      `;
-      document.getElementById("modalCloseHelp").addEventListener("click", closeModal);
-      document.getElementById("modalOverlay").addEventListener("click", (e) => {
-        if (e.target.id === "modalOverlay") closeModal();
-      });
-      document.getElementById("modalWhatsappAnyway").addEventListener("click", () => {
-        if (source === "whatsapp") {
-          const text = encodeURIComponent(
-            `Hola, encontré a ${petName} 🐾. Te voy a compartir mi ubicación por aquí para que puedas venir a buscarla. (Toca el clip 📎 y luego "Ubicación" para enviarla)`
-          );
-          window.location.href = `https://wa.me/${cleanPhone}?text=${text}`;
-        } else {
-          closeModal();
-        }
-      });
     }
 
     function closeModal() {
