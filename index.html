@@ -392,36 +392,12 @@
     }
 
     function shareLocation(phone, petName) {
-      const btn = document.getElementById("shareLocationBtn");
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "📍 Obteniendo ubicación...";
-      }
-
-      if (!navigator.geolocation) {
-        alert("Tu navegador no permite compartir ubicación. Puedes llamar al tutor directamente.");
-        if (btn) { btn.disabled = false; btn.textContent = "📍 Compartir mi ubicación"; }
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          const mapsUrl = `https://www.google.com/maps?q=${lat},${lng}`;
-          const text = encodeURIComponent(
-            `Hola, encontré a ${petName || "tu mascota"} 🐾. Esta es mi ubicación: ${mapsUrl}`
-          );
-          const cleanPhone = (phone || "").replace(/[^\d]/g, "");
-          window.open(`https://wa.me/${cleanPhone}?text=${text}`, "_blank");
-          if (btn) { btn.disabled = false; btn.textContent = "📍 Compartir mi ubicación"; }
-        },
-        (err) => {
-          alert("No se pudo obtener tu ubicación. Revisa los permisos de ubicación del navegador e intenta de nuevo.");
-          if (btn) { btn.disabled = false; btn.textContent = "📍 Compartir mi ubicación"; }
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
+      const name = petName || "tu mascota";
+      const text = encodeURIComponent(
+        `Hola, encontré a ${name} 🐾. Te voy a compartir mi ubicación por aquí para que puedas venir a buscarla. (Toca el clip 📎 y luego "Ubicación" para enviarla)`
       );
+      const cleanPhone = (phone || "").replace(/[^\d]/g, "");
+      window.open(`https://wa.me/${cleanPhone}?text=${text}`, "_blank");
     }
 
     function closeModal() {
