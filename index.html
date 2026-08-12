@@ -82,13 +82,21 @@
       width: 18px;
       height: 18px;
     }
+    .share-section {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f7f7f7;
+      border-radius: 14px;
+    }
     .share-label {
       font-size: 13px;
       color: #666;
       font-weight: bold;
-      margin-top: 20px;
-      margin-bottom: 8px;
+      margin: 0 0 10px;
       text-align: left;
+    }
+    .share-section .call-button:first-of-type {
+      margin-top: 0;
     }
     .owner-info a {
       color: #222;
@@ -388,8 +396,10 @@
             ${lostBanner}
             <h1>${speciesEmoji(pet.species)} ${pet.name || "Sin nombre"}</h1>
             ${callButton}
-            <div class="share-label">📍 Comparte tu ubicación para que puedan buscarla:</div>
-            ${locationButton}
+            <div class="share-section">
+              <div class="share-label">📍 Comparte tu ubicación para que puedan buscarla:</div>
+              ${locationButton}
+            </div>
             <div class="info compact">
               <p><span class="label">Raza:</span> ${pet.breed || "-"}</p>
               <p><span class="label">Sexo:</span> ${pet.sex || "-"}</p>
