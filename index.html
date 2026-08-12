@@ -103,14 +103,116 @@
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.02); }
     }
+    .tutor-link {
+      display: block;
+      margin-top: 20px;
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 13px;
+      text-decoration: underline;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .bell-btn {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #f5f5f5;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .bell-btn.active {
+      background: #fdecea;
+    }
+    .card-wrap {
+      position: relative;
+    }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 100;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+    }
+    .modal-box h2 {
+      font-size: 18px;
+      margin: 0 0 10px;
+    }
+    .modal-box p {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .modal-box input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      font-size: 18px;
+      text-align: center;
+      letter-spacing: 4px;
+      margin-bottom: 16px;
+      box-sizing: border-box;
+    }
+    .modal-row {
+      display: flex;
+      gap: 10px;
+    }
+    .modal-row button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      font-weight: bold;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .modal-btn-yes {
+      background: #c0392b;
+      color: white;
+    }
+    .modal-btn-no {
+      background: #eee;
+      color: #333;
+    }
+    .modal-error {
+      color: #c0392b;
+      font-size: 13px;
+      margin-top: -10px;
+      margin-bottom: 12px;
+      min-height: 16px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="card" id="card">
-      <div class="loading">Cargando datos de la mascota...</div>
+    <div class="card-wrap">
+      <div class="card" id="card">
+        <div class="loading">Cargando datos de la mascota...</div>
+      </div>
     </div>
   </div>
+  <div id="modalContainer"></div>
 
   <script>
     // ---- CONFIGURA ESTOS DOS VALORES CON LOS DE TU PROYECTO SUPABASE ----
@@ -227,6 +329,15 @@
           ${pet.owner_phone ? `<button class="call-button location-button" id="shareLocationBtn" data-phone="${pet.owner_phone}" data-pet="${pet.name || ''}">📍 Compartir mi ubicación</button>` : ''}
         `;
 
+        const cardWrap = document.querySelector(".card-wrap");
+        const bellBtn = document.createElement("button");
+        bellBtn.className = "bell-btn" + (plate.is_lost ? " active" : "");
+        bellBtn.id = "bellBtn";
+        bellBtn.title = plate.is_lost ? "La mascota está marcada como perdida" : "¿Se perdió tu mascota?";
+        bellBtn.textContent = "🔔";
+        cardWrap.appendChild(bellBtn);
+        bellBtn.addEventListener("click", () => openLostModal(plate, pet));
+
         const shareBtn = document.getElementById("shareLocationBtn");
         if (shareBtn) {
           shareBtn.addEventListener("click", () => shareLocation(shareBtn.dataset.phone, shareBtn.dataset.pet));
@@ -268,6 +379,109 @@
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
+    }
+
+    function closeModal() {
+      document.getElementById("modalContainer").innerHTML = "";
+    }
+
+    function openLostModal(plate, pet) {
+      const container = document.getElementById("modalContainer");
+      const petName = pet.name || "tu mascota";
+
+      if (!plate.is_lost) {
+        // Paso 1: preguntar si se perdió
+        container.innerHTML = `
+          <div class="modal-overlay" id="modalOverlay">
+            <div class="modal-box">
+              <h2>¿${petName} se ha perdido?</h2>
+              <p>Si confirmas, la placa mostrará una alerta a quien la escanee.</p>
+              <div class="modal-row">
+                <button class="modal-btn-no" id="modalNo">No</button>
+                <button class="modal-btn-yes" id="modalYes">Sí, se perdió</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById("modalNo").addEventListener("click", closeModal);
+        document.getElementById("modalOverlay").addEventListener("click", (e) => {
+          if (e.target.id === "modalOverlay") closeModal();
+        });
+        document.getElementById("modalYes").addEventListener("click", () => openPinModal(plate, pet, true));
+      } else {
+        // Ya está perdida: preguntar si la encontraron
+        container.innerHTML = `
+          <div class="modal-overlay" id="modalOverlay">
+            <div class="modal-box">
+              <h2>¿Ya encontraste a ${petName}?</h2>
+              <p>Si confirmas, se quitará la alerta de la placa.</p>
+              <div class="modal-row">
+                <button class="modal-btn-no" id="modalNo">Todavía no</button>
+                <button class="modal-btn-yes" id="modalYes">Sí, la encontré</button>
+              </div>
+            </div>
+          </div>
+        `;
+        document.getElementById("modalNo").addEventListener("click", closeModal);
+        document.getElementById("modalOverlay").addEventListener("click", (e) => {
+          if (e.target.id === "modalOverlay") closeModal();
+        });
+        document.getElementById("modalYes").addEventListener("click", () => openPinModal(plate, pet, false));
+      }
+    }
+
+    function openPinModal(plate, pet, goingLost) {
+      const container = document.getElementById("modalContainer");
+      container.innerHTML = `
+        <div class="modal-overlay" id="modalOverlay">
+          <div class="modal-box">
+            <h2>Código de seguridad</h2>
+            <p>Ingresa el código de 4 dígitos del tutor para confirmar.</p>
+            <input type="tel" inputmode="numeric" maxlength="4" id="pinInput" placeholder="••••">
+            <div class="modal-error" id="pinError"></div>
+            <div class="modal-row">
+              <button class="modal-btn-no" id="modalCancel">Cancelar</button>
+              <button class="modal-btn-yes" id="modalConfirm">Confirmar</button>
+            </div>
+          </div>
+        </div>
+      `;
+      const pinInput = document.getElementById("pinInput");
+      pinInput.focus();
+      document.getElementById("modalCancel").addEventListener("click", closeModal);
+      document.getElementById("modalOverlay").addEventListener("click", (e) => {
+        if (e.target.id === "modalOverlay") closeModal();
+      });
+      document.getElementById("modalConfirm").addEventListener("click", () => {
+        const entered = pinInput.value.trim();
+        if (!plate.admin_pin || entered !== String(plate.admin_pin).trim()) {
+          document.getElementById("pinError").textContent = "Código incorrecto.";
+          return;
+        }
+        applyLostStatus(plate, goingLost);
+      });
+    }
+
+    async function applyLostStatus(plate, goingLost) {
+      try {
+        const url = SUPABASE_URL + "/rest/v1/plates?public_token=eq." + encodeURIComponent(plate.public_token);
+        const res = await fetch(url, {
+          method: "PATCH",
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: "Bearer " + SUPABASE_ANON_KEY,
+            "Content-Type": "application/json",
+            Prefer: "return=representation"
+          },
+          body: JSON.stringify({ is_lost: goingLost })
+        });
+
+        if (!res.ok) throw new Error("Error al actualizar");
+
+        location.reload();
+      } catch (err) {
+        document.getElementById("pinError").textContent = "Ocurrió un error. Intenta de nuevo.";
+      }
     }
 
     loadPet();
